@@ -11,12 +11,8 @@ namespace GameProject.Core
         private static GameManager _instance;
         private bool isRunning = true;
         private Player player;
-        
         private Enemy enemy; 
-        
         private Map gameMap;
-
-        // Поле для фабрики
         private EnemyFactory _enemyFactory;
 
         public int MapWidth { get; private set; }
@@ -28,8 +24,8 @@ namespace GameProject.Core
             MapWidth = 10;
             MapHeight = 10;
             Difficulty = GameDifficulty.Medium;
-
-            _enemyFactory = new BearFactory();
+            
+            _enemyFactory = new BearFactory(); 
         }
 
         public static GameManager Instance => _instance ??= new GameManager();
@@ -38,7 +34,6 @@ namespace GameProject.Core
         {
             gameMap = new Map(MapWidth, MapHeight);
             player = new Player("Рейнджер", 100);
-            
             enemy = _enemyFactory.CreateEnemy();
 
             player.X = 2;
@@ -52,10 +47,17 @@ namespace GameProject.Core
             while (isRunning)
             {
                 HandleInput();
-                Update();
                 Render();
                 System.Threading.Thread.Sleep(50); 
             }
+
+            Console.WriteLine("\nИгра завершена. Спасибо за игру!");
+        }
+
+        private void PrintInstructions()
+        {
+            Console.WriteLine("Управление: СТРЕЛОЧКИ — движение, SPACE — атака, ESC — выход");
+            Console.WriteLine("------------------------------------------------------------");
         }
 
         private void HandleInput()
@@ -65,28 +67,39 @@ namespace GameProject.Core
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
                 
                 if (keyInfo.Key == ConsoleKey.Escape) { isRunning = false; return; }
+                
+                int newX = player.X;
+                int newY = player.Y;
 
-                if (keyInfo.Key == ConsoleKey.Spacebar)
+                if (keyInfo.Key == ConsoleKey.UpArrow)    newY--;
+                else if (keyInfo.Key == ConsoleKey.DownArrow)  newY++;
+                else if (keyInfo.Key == ConsoleKey.LeftArrow)  newX--;
+                else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
+                else if (keyInfo.Key == ConsoleKey.Spacebar)
                 {
                     if (enemy.Health > 0)
                     {
                         enemy.Attack(); 
-                        
                         enemy.Health -= 10;
                         player.Score += 20;
-                        Console.WriteLine($"[АТАКА] Вы ударили {enemy.Name}! HP: {enemy.Health}. Очки: {player.Score}");
                     }
+                    return;
+                }
+
+                if (gameMap.IsInsideBounds(newX, newY))
+                {
+                    player.Move(newX - player.X, newY - player.Y);
                 }
             }
         }
 
         private void Render()
         {
-            Console.SetCursorPosition(0, 8);
+            Console.SetCursorPosition(0, 5); 
+            
+            Console.WriteLine($"Позиция игрока: X: {player.X}, Y: {player.Y} (Карта: {MapWidth}x{MapHeight})      ");
             Console.WriteLine($"Статус врага ({enemy.Name}): HP: {enemy.Health}   ");
+            Console.WriteLine($"Твои очки: {player.Score}   ");
         }
-
-        private void PrintInstructions() { /* ... */ }
-        private void Update() { }
     }
 }
