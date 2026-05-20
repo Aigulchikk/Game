@@ -23,9 +23,9 @@ namespace GameProject.Core
         {
             MapWidth = 10;
             MapHeight = 10;
-            Difficulty = GameDifficulty.Medium;
+            Difficulty = GameDifficulty.Hard;
             
-            _enemyFactory = new BearFactory(); 
+            SelectFactory();
         }
 
         public static GameManager Instance => _instance ??= new GameManager();
@@ -93,6 +93,22 @@ namespace GameProject.Core
             }
         }
 
+        private void SelectFactory()
+        {
+            switch (Difficulty)
+            {
+                case GameDifficulty.Easy:
+                    _enemyFactory = new BearFactory();
+                    break;
+                case GameDifficulty.Hard:
+                    _enemyFactory = new DarkFairyFactory();
+                    break;
+                default:
+                    _enemyFactory = new BearFactory();
+                    break;
+            }
+        }
+
         private void Render()
         {
             Console.SetCursorPosition(0, 5); 
@@ -101,5 +117,6 @@ namespace GameProject.Core
             Console.WriteLine($"Статус врага ({enemy.Name}): HP: {enemy.Health}   ");
             Console.WriteLine($"Твои очки: {player.Score}   ");
         }
+        
     }
 }
