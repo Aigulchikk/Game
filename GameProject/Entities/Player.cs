@@ -1,25 +1,19 @@
-using System;
-
 namespace GameProject.Entities
 {
     public class Player : Entity
     {
+        public string Name { get; set; }
+        public int Health { get; set; }
+        public int Level { get; set; }
+        public string Weapon { get; set; }
         public int Score { get; set; }
-        
-        public int X { get; set; }
-        public int Y { get; set; }
 
-        public Player(string name, int health) : base(name, health)
+        public Player(string name, int health) : base(name)
         {
-            Score = 0;
-            X = 0;
-            Y = 0;
+            Name = name;
+            Health = health;
         }
 
-        public void Move(int deltaX, int deltaY)
-        {
-            X += deltaX;
-            Y += deltaY;
-        }
+        public void Move(int dx, int dy) { X += dx; Y += dy; }
     }
 }
