@@ -23,7 +23,7 @@ namespace GameProject.Core
         {
             MapWidth = 10;
             MapHeight = 10;
-            Difficulty = GameDifficulty.Hard;
+            Difficulty = GameDifficulty.Easy;
             
             SelectFactory();
         }
@@ -33,7 +33,12 @@ namespace GameProject.Core
         public void Run()
         {
             gameMap = new Map(MapWidth, MapHeight);
-            player = new Player("Рейнджер", 100);
+            player = new PlayerBuilder()
+        .SetName("Рейнджер")
+        .SetHealth(150)
+        .SetLevel(1)
+        .SetWeapon("Лук")
+        .Build();
             enemy = _enemyFactory.CreateEnemy();
 
             player.X = 2;
