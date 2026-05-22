@@ -40,14 +40,14 @@ namespace GameProject.Core
             if (_lastBuffActivationTime.HasValue && (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds < 60)
             {
                 double remaining = 60 - (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds;
-                Console.WriteLine($"\n [!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
+                LogMessage($"\n [!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
                 return;
             }
             _lastBuffActivationTime = DateTime.Now;
             _fireBuffEndTime = DateTime.Now.AddSeconds(10);
 
             player.Weapon = new FireDamage(player.Weapon); 
-            Console.WriteLine("\n[!] Бафф Огня активирован!");
+            LogMessage("\n[!] Бафф Огня активирован!");
         }
 
         public void Run()
@@ -87,7 +87,7 @@ namespace GameProject.Core
                 // Сбрасываем оружие на базовое
                 player.Weapon = new Sword(); 
                 _fireBuffEndTime = null;
-                Console.WriteLine("\n--- Эффект огня иссяк ---");
+                LogMessage("\n--- Эффект огня иссяк ---");
             }
         }
 
@@ -121,7 +121,7 @@ namespace GameProject.Core
                     int damage = player.Weapon.GetDamage(); 
                     enemy.Health -= damage;
                     player.Score += 20;
-                    Console.WriteLine($"Удар на {damage} урона!");
+                    LogMessage($"Удар на {damage} урона!");
                 }
             }
             else if (keyInfo.Key == ConsoleKey.F)
@@ -163,5 +163,12 @@ namespace GameProject.Core
             Console.WriteLine($"Твои очки: {player.Score}   ");
         }
         
+        private void LogMessage(string message)
+        {
+            Console.SetCursorPosition(0, 12);
+            Console.Write(new string(' ', Console.WindowWidth)); 
+            Console.SetCursorPosition(0, 12);
+            Console.Write(message);
+        }
     }
 }
