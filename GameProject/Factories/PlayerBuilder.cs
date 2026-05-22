@@ -1,4 +1,5 @@
 using GameProject.Entities;
+using GameProject.Weapons;
 
 namespace GameProject.Factories
 {
@@ -24,7 +25,7 @@ namespace GameProject.Factories
             return this;
         }
 
-        public PlayerBuilder SetWeapon(string weapon)
+        public PlayerBuilder SetWeapon(IWeapon weapon)
         {
             _player.Weapon = weapon;
             return this;

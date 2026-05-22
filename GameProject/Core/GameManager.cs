@@ -1,6 +1,7 @@
 using System;
 using GameProject.Entities;
 using GameProject.Factories;
+using GameProject.Weapons;
 
 namespace GameProject.Core
 {
@@ -14,6 +15,10 @@ namespace GameProject.Core
         private Enemy enemy; 
         private Map gameMap;
         private EnemyFactory _enemyFactory;
+
+        private DateTime? _fireBuffEndTime = null; 
+        private DateTime? _lastBuffActivationTime = null;
+        private const int FireBuffDurationSeconds = 10;
 
         public int MapWidth { get; private set; }
         public int MapHeight { get; private set; }
@@ -30,15 +35,30 @@ namespace GameProject.Core
 
         public static GameManager Instance => _instance ??= new GameManager();
 
+        public void ActivateFireBuff()
+        {
+            if (_lastBuffActivationTime.HasValue && (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds < 60)
+            {
+                double remaining = 60 - (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds;
+                Console.WriteLine($"\n [!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
+                return;
+            }
+            _lastBuffActivationTime = DateTime.Now;
+            _fireBuffEndTime = DateTime.Now.AddSeconds(10);
+
+            player.Weapon = new FireDamage(player.Weapon); 
+            Console.WriteLine("\n[!] Бафф Огня активирован!");
+        }
+
         public void Run()
         {
             gameMap = new Map(MapWidth, MapHeight);
             player = new PlayerBuilder()
-        .SetName("Рейнджер")
-        .SetHealth(150)
-        .SetLevel(1)
-        .SetWeapon("Лук")
-        .Build();
+            .SetName("Рейнджер")
+            .SetHealth(150)
+            .SetLevel(1)
+            .Build();
+
             enemy = _enemyFactory.CreateEnemy();
 
             player.X = 2;
@@ -51,12 +71,24 @@ namespace GameProject.Core
 
             while (isRunning)
             {
+                UpdateBuffs();
                 HandleInput();
                 Render();
                 System.Threading.Thread.Sleep(50); 
             }
 
-            Console.WriteLine("\nИгра завершена. Спасибо за игру!");
+            Console.WriteLine("\n Игра завершена. Спасибо за игру!");
+        }
+
+        private void UpdateBuffs()
+        {
+            if (_fireBuffEndTime.HasValue && DateTime.Now > _fireBuffEndTime.Value)
+            {
+                // Сбрасываем оружие на базовое
+                player.Weapon = new Sword(); 
+                _fireBuffEndTime = null;
+                Console.WriteLine("\n--- Эффект огня иссяк ---");
+            }
         }
 
         private void PrintInstructions()
@@ -70,31 +102,37 @@ namespace GameProject.Core
             if (Console.KeyAvailable)
             {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
-                
+
                 if (keyInfo.Key == ConsoleKey.Escape) { isRunning = false; return; }
+            int newX = player.X;
+            int newY = player.Y;
+
+            if (keyInfo.Key == ConsoleKey.UpArrow)    newY--;
+            else if (keyInfo.Key == ConsoleKey.DownArrow)  newY++;
+            else if (keyInfo.Key == ConsoleKey.LeftArrow)  newX--;
+            else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
+        
+            else if (keyInfo.Key == ConsoleKey.Spacebar)
+            {
+                if (enemy.Health > 0)
+                {
+                    enemy.Attack();
                 
-                int newX = player.X;
-                int newY = player.Y;
-
-                if (keyInfo.Key == ConsoleKey.UpArrow)    newY--;
-                else if (keyInfo.Key == ConsoleKey.DownArrow)  newY++;
-                else if (keyInfo.Key == ConsoleKey.LeftArrow)  newX--;
-                else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
-                else if (keyInfo.Key == ConsoleKey.Spacebar)
-                {
-                    if (enemy.Health > 0)
-                    {
-                        enemy.Attack(); 
-                        enemy.Health -= 10;
-                        player.Score += 20;
-                    }
-                    return;
+                    int damage = player.Weapon.GetDamage(); 
+                    enemy.Health -= damage;
+                    player.Score += 20;
+                    Console.WriteLine($"Удар на {damage} урона!");
                 }
+            }
+            else if (keyInfo.Key == ConsoleKey.F)
+            {
+                ActivateFireBuff();
+            }
 
-                if (gameMap.IsInsideBounds(newX, newY))
-                {
-                    player.Move(newX - player.X, newY - player.Y);
-                }
+            if (gameMap.IsInsideBounds(newX, newY) && (newX != player.X || newY != player.Y))
+            {
+                player.Move(newX - player.X, newY - player.Y);
+            }
             }
         }
 
@@ -117,6 +155,8 @@ namespace GameProject.Core
         private void Render()
         {
             Console.SetCursorPosition(0, 5); 
+            string buffStatus = _fireBuffEndTime.HasValue ? "[ОГОНЬ АКТИВЕН]" : "[Обычный]";
+            Console.WriteLine($"Оружие: {player.Weapon.GetDescription()} {buffStatus}");
             
             Console.WriteLine($"Позиция игрока: X: {player.X}, Y: {player.Y} (Карта: {MapWidth}x{MapHeight})      ");
             Console.WriteLine($"Статус врага ({enemy.Name}): HP: {enemy.Health}   ");
