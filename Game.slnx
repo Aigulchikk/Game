@@ -1,6 +1,4 @@
 <Solution>
-  <Folder Name="/GameProject/">
-    <Project Path="GameProject/Game.csproj" />
-  </Folder>
-  <Project Path="Game/Game.csproj" />
+  <Project Path="GameProject/Game.csproj" />
+  <Project Path="GameProject.Tests/GameProject.Tests.csproj" />
 </Solution>
