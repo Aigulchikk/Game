@@ -15,6 +15,7 @@ namespace GameProject.Core
         private Enemy enemy; 
         private Map gameMap;
         private EnemyFactory _enemyFactory;
+        private BattleFacade _battleFacade = new BattleFacade();
 
         private DateTime? _fireBuffEndTime = null; 
         private DateTime? _lastBuffActivationTime = null;
@@ -103,36 +104,33 @@ namespace GameProject.Core
             {
                 ConsoleKeyInfo keyInfo = Console.ReadKey(true);
 
-                if (keyInfo.Key == ConsoleKey.Escape) { isRunning = false; return; }
-            int newX = player.X;
-            int newY = player.Y;
-
-            if (keyInfo.Key == ConsoleKey.UpArrow)    newY--;
-            else if (keyInfo.Key == ConsoleKey.DownArrow)  newY++;
-            else if (keyInfo.Key == ConsoleKey.LeftArrow)  newX--;
-            else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
-        
-            else if (keyInfo.Key == ConsoleKey.Spacebar)
-            {
-                if (enemy.Health > 0)
-                {
-                    enemy.Attack();
-                
-                    int damage = player.Weapon.GetDamage(); 
-                    enemy.Health -= damage;
-                    player.Score += 20;
-                    LogMessage($"Удар на {damage} урона!");
+                if (keyInfo.Key == ConsoleKey.Escape) 
+                { 
+                    isRunning = false; 
+                    return; 
                 }
-            }
-            else if (keyInfo.Key == ConsoleKey.F)
-            {
-                ActivateFireBuff();
-            }
 
-            if (gameMap.IsInsideBounds(newX, newY) && (newX != player.X || newY != player.Y))
-            {
-                player.Move(newX - player.X, newY - player.Y);
-            }
+                int newX = player.X;
+                int newY = player.Y;
+
+                if (keyInfo.Key == ConsoleKey.UpArrow) newY--;
+                else if (keyInfo.Key == ConsoleKey.DownArrow) newY++;
+                else if (keyInfo.Key == ConsoleKey.LeftArrow) newX--;
+                else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
+            
+                else if (keyInfo.Key == ConsoleKey.Spacebar)
+                {
+                    _battleFacade.ExecuteAttack(player, enemy, LogMessage);
+                }
+                else if (keyInfo.Key == ConsoleKey.F)
+                {
+                    ActivateFireBuff();
+                }
+
+                if (gameMap.IsInsideBounds(newX, newY) && (newX != player.X || newY != player.Y))
+                {
+                    player.Move(newX - player.X, newY - player.Y);
+                }
             }
         }
 
