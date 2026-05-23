@@ -9,6 +9,11 @@ namespace GameProject.Core
 
     public class GameManager
     {
+        private const int LogMessageYPosition = 12;
+        private const int BuffCooldownSeconds = 60;
+        private const int FireBuffDurationSeconds = 10;
+        private const int AttackScorePoints = 20;
+
         private static GameManager _instance;
         private bool isRunning = true;
         private Player player;
@@ -19,7 +24,6 @@ namespace GameProject.Core
 
         private DateTime? _fireBuffEndTime = null; 
         private DateTime? _lastBuffActivationTime = null;
-        private const int FireBuffDurationSeconds = 10;
 
         public int MapWidth { get; private set; }
         public int MapHeight { get; private set; }
@@ -38,9 +42,9 @@ namespace GameProject.Core
 
         public void ActivateFireBuff()
         {
-            if (_lastBuffActivationTime.HasValue && (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds < 60)
+            if (_lastBuffActivationTime.HasValue && (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds < BuffCooldownSeconds)
             {
-                double remaining = 60 - (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds;
+                double remaining = BuffCooldownSeconds - (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds;
                 LogMessage($"\n [!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
                 return;
             }
@@ -53,17 +57,7 @@ namespace GameProject.Core
 
         public void Run()
         {
-            gameMap = new Map(MapWidth, MapHeight);
-            player = new PlayerBuilder()
-            .SetName("Рейнджер")
-            .SetHealth(150)
-            .SetLevel(1)
-            .Build();
-
-            enemy = _enemyFactory.CreateEnemy();
-
-            player.X = 2;
-            player.Y = 2;
+            InitializeGame(); // Теперь всё понятно с первого взгляда!
 
             Console.Clear();
             Console.WriteLine($"=== Game Started with difficulty: [{Difficulty}] ===");
@@ -79,6 +73,20 @@ namespace GameProject.Core
             }
 
             Console.WriteLine("\n Игра завершена. Спасибо за игру!");
+        }
+        private void InitializeGame()
+        {
+            gameMap = new Map(MapWidth, MapHeight);
+            player = new PlayerBuilder()
+            .SetName("Рейнджер")
+            .SetHealth(150)
+            .SetLevel(1)
+            .Build();
+
+            enemy = _enemyFactory.CreateEnemy();
+
+            player.X = 2;
+            player.Y = 2;
         }
 
         private void UpdateBuffs()
@@ -163,9 +171,9 @@ namespace GameProject.Core
         
         private void LogMessage(string message)
         {
-            Console.SetCursorPosition(0, 12);
+            Console.SetCursorPosition(0, LogMessageYPosition);
             Console.Write(new string(' ', Console.WindowWidth)); 
-            Console.SetCursorPosition(0, 12);
+            Console.SetCursorPosition(0, LogMessageYPosition);
             Console.Write(message);
         }
     }
