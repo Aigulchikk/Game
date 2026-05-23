@@ -74,6 +74,7 @@ namespace GameProject.Core
 
             Console.WriteLine("\n Игра завершена. Спасибо за игру!");
         }
+        
         private void InitializeGame()
         {
             gameMap = new Map(MapWidth, MapHeight);
