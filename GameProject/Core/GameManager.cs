@@ -27,6 +27,8 @@ namespace GameProject.Core
         private DateTime? _fireBuffEndTime = null; 
         private DateTime? _lastBuffActivationTime = null;
 
+        private IWeapon? _baseWeapon;
+
         public int MapWidth { get; private set; }
         public int MapHeight { get; private set; }
         public GameDifficulty Difficulty { get; private set; }
@@ -50,10 +52,16 @@ namespace GameProject.Core
                 LogMessage($"\n [!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
                 return;
             }
+
+            if (!(player.Weapon is FireDamage)) 
+            {
+                _baseWeapon = player.Weapon;
+                player.Weapon = new FireDamage(player.Weapon);
+            }
+
             _lastBuffActivationTime = DateTime.Now;
             _fireBuffEndTime = DateTime.Now.AddSeconds(10);
-
-            player.Weapon = new FireDamage(player.Weapon); 
+            
             LogMessage("\n[!] Бафф Огня активирован!");
         }
 
@@ -98,8 +106,12 @@ namespace GameProject.Core
         {
             if (_fireBuffEndTime.HasValue && DateTime.Now > _fireBuffEndTime.Value)
             {
-                // Сбрасываем оружие на базовое
-                player.Weapon = new Sword(); 
+                if (_baseWeapon != null)
+                {
+                    player.Weapon = _baseWeapon;
+                    _baseWeapon = null;
+                }
+                
                 _fireBuffEndTime = null;
                 LogMessage("\n--- Эффект огня иссяк ---");
             }
@@ -135,7 +147,7 @@ namespace GameProject.Core
                 else if (keyInfo.Key == ConsoleKey.DownArrow) newY++;
                 else if (keyInfo.Key == ConsoleKey.LeftArrow) newX--;
                 else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
-                
+
                 else if (keyInfo.Key == ConsoleKey.Spacebar)
                 {
                     if (enemy.Health > 0)
@@ -147,7 +159,6 @@ namespace GameProject.Core
                     else LogMessage("\n[!] Здесь никого нет, ты бьешь воздух!");
                 }
 
-                // 4. Применение движения
                 if (gameMap.IsInsideBounds(newX, newY) && (newX != player.X || newY != player.Y))
                 {
                     player.Move(newX - player.X, newY - player.Y);

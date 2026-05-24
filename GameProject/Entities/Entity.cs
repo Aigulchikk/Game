@@ -12,5 +12,11 @@ namespace GameProject.Entities
             Name = name;
             Health = health;
         }
+
+        public virtual void TakeDamage(int amount)
+        {
+            Health -= amount;
+            if (Health < 0) Health = 0;
+        }
     }
 }

@@ -9,7 +9,7 @@ namespace GameProject.Entities
 
         public Player(string name, int health) : base(name, health) 
         {
-            Weapon = new Sword();
+            Weapon = new FireDamage(new Sword());
         }
 
         public void TakeDamage(int amount)
