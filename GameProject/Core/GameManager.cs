@@ -3,6 +3,7 @@ using GameProject.Entities;
 using GameProject.Factories;
 using GameProject.Weapons;
 using GameProject.Strategies;
+using GameProject.UI;
 
 namespace GameProject.Core
 {
@@ -58,7 +59,7 @@ namespace GameProject.Core
 
         public void Run()
         {
-            InitializeGame(); // Теперь всё понятно с первого взгляда!
+            InitializeGame();
 
             Console.Clear();
             Console.WriteLine($"=== Game Started with difficulty: [{Difficulty}] ===");
@@ -86,6 +87,7 @@ namespace GameProject.Core
             .Build();
 
             enemy = new DarkFairy("Темная Фея", 50); 
+            var hud = new ConsoleHUD(player);
             enemy.SetAttackStrategy(new RangedAttackStrategy());
 
             player.X = 2;
@@ -121,6 +123,11 @@ namespace GameProject.Core
                     return; 
                 }
 
+                if (keyInfo.Key == ConsoleKey.F)
+                {
+                    ActivateFireBuff();
+                }
+
                 int newX = player.X;
                 int newY = player.Y;
 
@@ -128,35 +135,19 @@ namespace GameProject.Core
                 else if (keyInfo.Key == ConsoleKey.DownArrow) newY++;
                 else if (keyInfo.Key == ConsoleKey.LeftArrow) newX--;
                 else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
-            
+                
                 else if (keyInfo.Key == ConsoleKey.Spacebar)
                 {
-                if (enemy.Health > 0)
-                {
-                    _battleFacade.ExecuteAttack(player, enemy, LogMessage);
-                    
-                    // Враг атакует только если он еще жив
                     if (enemy.Health > 0)
                     {
-                        enemy.PerformAttack(player);
+                        _battleFacade.ExecuteAttack(player, enemy, LogMessage);
+                        if (enemy.Health > 0) enemy.PerformAttack(player);
+                        else LogMessage($"\n[!] {enemy.Name} повержен!");
                     }
-                    else
-                    {
-                        LogMessage($"\n[!] {enemy.Name} повержен! Очки сохранены.");
-                    }
-                }
-                else
-                {
-                    LogMessage("\n[!] Здесь никого нет, ты бьешь воздух!");
+                    else LogMessage("\n[!] Здесь никого нет, ты бьешь воздух!");
                 }
 
-            }
-
-                else if (keyInfo.Key == ConsoleKey.F)
-                {
-                    ActivateFireBuff();
-                }
-
+                // 4. Применение движения
                 if (gameMap.IsInsideBounds(newX, newY) && (newX != player.X || newY != player.Y))
                 {
                     player.Move(newX - player.X, newY - player.Y);

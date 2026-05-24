@@ -1,9 +1,12 @@
+using System;
 using GameProject.Weapons;
 
 namespace GameProject.Entities
 {
     public class Player : Entity
     {
+        public event Action<int>? OnHealthChanged;
+
         public Player(string name, int health) : base(name, health) 
         {
             Weapon = new Sword();
@@ -12,12 +15,16 @@ namespace GameProject.Entities
         public void TakeDamage(int amount)
         {
             Health -= amount;
-            if (Health < 0) Health = 0; 
+            if (Health < 0) Health = 0;
+            
+            OnHealthChanged?.Invoke(Health); 
         }
 
         public void Heal(int amount)
         {
             Health += amount;
+            
+            OnHealthChanged?.Invoke(Health); 
         }
 
         public IWeapon Weapon { get; set; }
