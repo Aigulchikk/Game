@@ -1,13 +1,16 @@
-using System;
+using GameProject.Entities;
+
 namespace GameProject.Entities
 {
     public class DarkFairy : Enemy
     {
-        public DarkFairy() : base("Чёрная фея", 80) { }
+        public DarkFairy(string name, int health) : base(name, health) 
+        { 
+        }
 
         public override void Attack()
         {
-            Console.WriteLine("Фея окутывает тебя магическим туманом...");
+            Console.WriteLine("Темная Фея взмахивает крыльями!");
         }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using GameProject.Entities;
 using GameProject.Factories;
 using GameProject.Weapons;
+using GameProject.Strategies;
 
 namespace GameProject.Core
 {
@@ -9,7 +10,7 @@ namespace GameProject.Core
 
     public class GameManager
     {
-        private const int LogMessageYPosition = 12;
+        private const int LogMessageYPosition = 11;
         private const int BuffCooldownSeconds = 60;
         private const int FireBuffDurationSeconds = 10;
         private const int AttackScorePoints = 20;
@@ -74,7 +75,7 @@ namespace GameProject.Core
 
             Console.WriteLine("\n Игра завершена. Спасибо за игру!");
         }
-        
+
         private void InitializeGame()
         {
             gameMap = new Map(MapWidth, MapHeight);
@@ -84,7 +85,8 @@ namespace GameProject.Core
             .SetLevel(1)
             .Build();
 
-            enemy = _enemyFactory.CreateEnemy();
+            enemy = new DarkFairy("Темная Фея", 50); 
+            enemy.SetAttackStrategy(new RangedAttackStrategy());
 
             player.X = 2;
             player.Y = 2;
@@ -129,8 +131,27 @@ namespace GameProject.Core
             
                 else if (keyInfo.Key == ConsoleKey.Spacebar)
                 {
+                if (enemy.Health > 0)
+                {
                     _battleFacade.ExecuteAttack(player, enemy, LogMessage);
+                    
+                    // Враг атакует только если он еще жив
+                    if (enemy.Health > 0)
+                    {
+                        enemy.PerformAttack(player);
+                    }
+                    else
+                    {
+                        LogMessage($"\n[!] {enemy.Name} повержен! Очки сохранены.");
+                    }
                 }
+                else
+                {
+                    LogMessage("\n[!] Здесь никого нет, ты бьешь воздух!");
+                }
+
+            }
+
                 else if (keyInfo.Key == ConsoleKey.F)
                 {
                     ActivateFireBuff();
@@ -164,6 +185,8 @@ namespace GameProject.Core
             Console.SetCursorPosition(0, 5); 
             string buffStatus = _fireBuffEndTime.HasValue ? "[ОГОНЬ АКТИВЕН]" : "[Обычный]";
             Console.WriteLine($"Оружие: {player.Weapon.GetDescription()} {buffStatus}");
+
+            Console.WriteLine($"Игрок: {player.Name} | HP: {player.Health} | Оружие: {player.Weapon.GetDescription()} {buffStatus}");
             
             Console.WriteLine($"Позиция игрока: X: {player.X}, Y: {player.Y} (Карта: {MapWidth}x{MapHeight})      ");
             Console.WriteLine($"Статус врага ({enemy.Name}): HP: {enemy.Health}   ");
