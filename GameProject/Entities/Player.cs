@@ -55,7 +55,33 @@ namespace GameProject.Entities
         public void Move(int dx, int dy) 
         { 
             X += dx; 
-            Y += dy; 
+            Y += dy;
+            
+            Console.SetCursorPosition(0, 16);
+            Console.Write($"PLAYER DEBUG: Новые координаты: {X}, {Y}      ");
+        }
+
+        public SaveData ToSaveData() 
+        {
+            return new SaveData 
+            {
+                PlayerX = this.X,
+                PlayerY = this.Y,
+                Health = this.Health,
+                Level = this.Level,
+                Score = this.Score
+            };
+        }
+
+        public void LoadFromSaveData(SaveData data) 
+        {
+            this.X = data.PlayerX;
+            this.Y = data.PlayerY;
+            this.Health = data.Health;
+            this.Level = data.Level;
+            this.Score = data.Score;
+            
+            OnHealthChanged?.Invoke(this.Health);
         }
     }
 }

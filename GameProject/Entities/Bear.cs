@@ -5,7 +5,7 @@ namespace GameProject.Entities
 {
     public class Bear : Enemy
     {
-        public Bear() : base("Медведь-страж", 100) { }
+        public Bear(string name, int health) : base(name, health) { }
 
         public override void Attack()
         {

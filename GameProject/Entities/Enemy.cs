@@ -7,6 +7,7 @@ namespace GameProject.Entities
     {
         private EnemyState _currentState;
         private IAttackStrategy? _attackStrategy;
+        public Projectile? ActiveProjectile { get; set; }
 
         protected Enemy(string name, int health) : base(name, health) 
         { 
@@ -21,6 +22,11 @@ namespace GameProject.Entities
         public void Update()
         {
             _currentState?.Update(this);
+        }
+
+        public void LaunchProjectile()
+        {
+            ActiveProjectile = new Projectile(this.X, this.Y);
         }
 
         public void SetAttackStrategy(IAttackStrategy strategy) 

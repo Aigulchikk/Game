@@ -1,4 +1,5 @@
 using GameProject.Entities;
+using GameProject.Core;
 
 namespace GameProject.Commands
 {
@@ -17,7 +18,15 @@ namespace GameProject.Commands
 
         public void Execute()
         {
-            _player.Move(_dx, _dy);
+            int newX = _player.X + _dx;
+            int newY = _player.Y + _dy;
+
+            if (newX > 0 && newX < GameManager.Instance.MapWidth - 1 &&
+                newY > 0 && newY < GameManager.Instance.MapHeight - 1)
+            {
+                _player.X = newX;
+                _player.Y = newY;
+            }
         }
     }
 }
