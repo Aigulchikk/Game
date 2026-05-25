@@ -4,6 +4,7 @@ using GameProject.Factories;
 using GameProject.Weapons;
 using GameProject.Strategies;
 using GameProject.UI;
+using GameProject.Commands;
 
 namespace GameProject.Core
 {
@@ -16,22 +17,25 @@ namespace GameProject.Core
         private const int FireBuffDurationSeconds = 10;
         private const int AttackScorePoints = 20;
 
-        private static GameManager _instance;
+        private static GameManager? _instance;
         private bool isRunning = true;
-        private Player player;
-        private Enemy enemy; 
-        private Map gameMap;
-        private EnemyFactory _enemyFactory;
+
         private BattleFacade _battleFacade = new BattleFacade();
 
         private DateTime? _fireBuffEndTime = null; 
         private DateTime? _lastBuffActivationTime = null;
+        private Player player = null!;
+        private Enemy enemy = null!;
+        private Map gameMap = null!;
+        private EnemyFactory _enemyFactory = null!;
 
         private IWeapon? _baseWeapon;
 
         public int MapWidth { get; private set; }
         public int MapHeight { get; private set; }
         public GameDifficulty Difficulty { get; private set; }
+
+        private InputManager _inputManager = new InputManager();
 
         private GameManager()
         {
@@ -61,6 +65,8 @@ namespace GameProject.Core
 
             _lastBuffActivationTime = DateTime.Now;
             _fireBuffEndTime = DateTime.Now.AddSeconds(10);
+
+            _inputManager.BindCommand(ConsoleKey.F, new DelegateCommand(ActivateFireBuff));
             
             LogMessage("\n[!] Бафф Огня активирован!");
         }
@@ -97,6 +103,11 @@ namespace GameProject.Core
             enemy = new DarkFairy("Темная Фея", 50); 
             var hud = new ConsoleHUD(player);
             enemy.SetAttackStrategy(new RangedAttackStrategy());
+
+            _inputManager.BindCommand(ConsoleKey.W, new MoveCommand(player, 0, -1));
+            _inputManager.BindCommand(ConsoleKey.Spacebar, new AttackCommand(player, enemy, _battleFacade, LogMessage));
+
+            _inputManager.BindCommand(ConsoleKey.F, new DelegateCommand(ActivateFireBuff));
 
             player.X = 2;
             player.Y = 2;
@@ -135,10 +146,7 @@ namespace GameProject.Core
                     return; 
                 }
 
-                if (keyInfo.Key == ConsoleKey.F)
-                {
-                    ActivateFireBuff();
-                }
+                _inputManager.HandleInput(keyInfo.Key);
 
                 int newX = player.X;
                 int newY = player.Y;
@@ -147,17 +155,6 @@ namespace GameProject.Core
                 else if (keyInfo.Key == ConsoleKey.DownArrow) newY++;
                 else if (keyInfo.Key == ConsoleKey.LeftArrow) newX--;
                 else if (keyInfo.Key == ConsoleKey.RightArrow) newX++;
-
-                else if (keyInfo.Key == ConsoleKey.Spacebar)
-                {
-                    if (enemy.Health > 0)
-                    {
-                        _battleFacade.ExecuteAttack(player, enemy, LogMessage);
-                        if (enemy.Health > 0) enemy.PerformAttack(player);
-                        else LogMessage($"\n[!] {enemy.Name} повержен!");
-                    }
-                    else LogMessage("\n[!] Здесь никого нет, ты бьешь воздух!");
-                }
 
                 if (gameMap.IsInsideBounds(newX, newY) && (newX != player.X || newY != player.Y))
                 {
@@ -185,16 +182,17 @@ namespace GameProject.Core
         private void Render()
         {
             Console.SetCursorPosition(0, 5); 
-            string buffStatus = _fireBuffEndTime.HasValue ? "[ОГОНЬ АКТИВЕН]" : "[Обычный]";
-            Console.WriteLine($"Оружие: {player.Weapon.GetDescription()} {buffStatus}");
-
-            Console.WriteLine($"Игрок: {player.Name} | HP: {player.Health} | Оружие: {player.Weapon.GetDescription()} {buffStatus}");
+            
+            string weaponDescription = player.Weapon.GetDescription();
+            
+            Console.WriteLine($"Оружие: {weaponDescription}           ");
+            Console.WriteLine($"Игрок: {player.Name} | HP: {player.Health} | Оружие: {weaponDescription}           ");
             
             Console.WriteLine($"Позиция игрока: X: {player.X}, Y: {player.Y} (Карта: {MapWidth}x{MapHeight})      ");
             Console.WriteLine($"Статус врага ({enemy.Name}): HP: {enemy.Health}   ");
             Console.WriteLine($"Твои очки: {player.Score}   ");
         }
-        
+                
         private void LogMessage(string message)
         {
             Console.SetCursorPosition(0, LogMessageYPosition);
