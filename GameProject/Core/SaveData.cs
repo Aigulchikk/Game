@@ -10,5 +10,6 @@ namespace GameProject.Core
         public int Health { get; set; }
         public int Level { get; set; }
         public int Score { get; set; }
+        public bool IsFireSwordActive { get; set; }
     }
 }

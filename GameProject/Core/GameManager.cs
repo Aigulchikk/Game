@@ -71,7 +71,7 @@ namespace GameProject.Core
             if (_lastBuffActivationTime.HasValue && (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds < BuffCooldownSeconds)
             {
                 double remaining = BuffCooldownSeconds - (DateTime.Now - _lastBuffActivationTime.Value).TotalSeconds;
-                LogMessage($"\n [!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
+                LogMessage($"[!] Бафф еще на перезарядке! Осталось: {remaining:F0} сек.");
                 return;
             }
 
@@ -81,35 +81,47 @@ namespace GameProject.Core
                 player.Weapon = new FireDamage(player.Weapon);
             }
 
-            _lastBuffActivationTime = DateTime.Now;
-            _fireBuffEndTime = DateTime.Now.AddSeconds(10);
+            System.Diagnostics.Debug.WriteLine($"DEBUG: Активирую бафф для игрока: {player.GetHashCode()}");
 
-            _inputManager.BindCommand(ConsoleKey.F, new DelegateCommand(ActivateFireBuff));
+            player.IsFireSwordActive = true;
+            _lastBuffActivationTime = DateTime.Now;
+            _fireBuffEndTime = DateTime.Now.AddSeconds(FireBuffDurationSeconds);
             
-            LogMessage("\n[!] Бафф Огня активирован!");
+            LogMessage("[!] Бафф Огня активирован!");
         }
 
         private void SetupNextLevel()
         {
+
             player.X = 2;
             player.Y = 2;
 
-            _appleX = _random.Next(1, MapWidth - 2);
-            _appleY = _random.Next(1, MapHeight - 2);
+            _portalX = MapWidth - 3; 
+            _portalY = MapHeight - 3;
+
+            _potionX = _random.Next(5, MapWidth - 5);
+            _potionY = _random.Next(2, MapHeight - 2);
+            _isPotionActive = true;
+
+            _appleX = _random.Next(5, MapWidth - 5);
+            _appleY = _random.Next(2, MapHeight - 2);
             _isAppleActive = true;
 
             _enemies.Clear();
+            
             var fairy = new DarkFairy("Темная Фея", 50);
-            fairy.X = _random.Next(1, MapWidth - 2);
-            fairy.Y = _random.Next(1, MapHeight - 2);
+            fairy.X = _random.Next(20, MapWidth - 2);
+            fairy.Y = _random.Next(2, MapHeight - 2);
+            fairy.SetAttackStrategy(new RangedAttackStrategy());
             _enemies.Add(fairy);
 
             var bear = new Bear("Гризли", 80);
-            bear.X = _random.Next(1, MapWidth - 2);
-            bear.Y = _random.Next(1, MapHeight - 2);
+            bear.X = MapWidth - 5;
+            bear.Y = MapHeight - 3;
+            bear.SetAttackStrategy(new MeleeAttackStrategy());
             _enemies.Add(bear);
 
-            LogMessage("Уровень 2: Новые опасности в лесу!");
+            LogMessage("Уровень обновлен: позиция стабилизирована!");
         }
 
         public void Run()
@@ -117,20 +129,19 @@ namespace GameProject.Core
         #if WINDOWS
             try 
             {
-                Console.SetWindowSize(90, 20); 
-                Console.SetBufferSize(90, 20);
+                Console.SetWindowSize(75, 15);
+                Console.SetBufferSize(75, 15);
             }
-            catch { /* Игнорируем ошибки размера окна */ }
+            catch { }
         #endif
 
             Console.CursorVisible = false;
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            
+
             InitializeGame();
 
             if (player == null)
             {
-                Console.WriteLine("Критическая ошибка: Игрок не был создан!");
                 return;
             }
 
@@ -152,7 +163,7 @@ namespace GameProject.Core
 
                     e.DistanceToPlayer = Math.Sqrt(Math.Pow(e.X - player.X, 2) + Math.Pow(e.Y - player.Y, 2));
 
-                    if (_attackTimer % 20 == 0) 
+                    if (_attackTimer % 20 == 0)
                     {
                         e.PerformAttack(player);
                     }
@@ -170,8 +181,8 @@ namespace GameProject.Core
                             player.TakeDamage(2);
                             e.ActiveProjectile = null;
                         }
-                        else if (e.ActiveProjectile.X <= 0 || e.ActiveProjectile.X >= 88 ||
-                                e.ActiveProjectile.Y <= 0 || e.ActiveProjectile.Y >= 18)
+                        else if (e.ActiveProjectile.X <= 0 || e.ActiveProjectile.X >= MapWidth - 1 ||
+                                e.ActiveProjectile.Y <= 0 || e.ActiveProjectile.Y >= MapHeight - 1)
                         {
                             e.ActiveProjectile = null;
                         }
@@ -184,8 +195,8 @@ namespace GameProject.Core
 
                 if (CheckGameEnd())
                 {
-                    isRunning = false; 
-                    break; 
+                    isRunning = false;
+                    break;
                 }
 
                 if (player.X == _portalX && player.Y == _portalY)
@@ -194,7 +205,7 @@ namespace GameProject.Core
                     SetupNextLevel();
                     _attackTimer = 0;
                 }
-                
+
                 if (_isPotionActive && player.X == _potionX && player.Y == _potionY)
                 {
                     player.Health += 30;
@@ -213,10 +224,11 @@ namespace GameProject.Core
                 }
 
                 Render();
-                
+
                 System.Threading.Thread.Sleep(50);
             }
 
+            Console.Clear();
             Console.WriteLine("\nИгра завершена. Спасибо за игру!");
             Console.WriteLine("Нажми любую клавишу для выхода...");
             Console.ReadKey();
@@ -271,6 +283,8 @@ namespace GameProject.Core
                     _baseWeapon = null;
                 }
                 
+                player.IsFireSwordActive = false;
+
                 _fireBuffEndTime = null;
                 LogMessage("\n--- Эффект огня иссяк ---");
             }
@@ -336,6 +350,7 @@ namespace GameProject.Core
                 }
 
                 _inputManager.HandleInput(keyInfo.Key);
+                Render();
             }
         }
 
@@ -365,8 +380,27 @@ namespace GameProject.Core
 
         private void DrawMap()
         {
+
+            for (int y = 0; y < MapHeight; y++)
+            {
+                Console.SetCursorPosition(0, y);
+                Console.Write("@");
+                
+                Console.SetCursorPosition(MapWidth - 1, y);
+                Console.Write("@");
+            }
+
             Console.SetCursorPosition(0, 0);
-            StringBuilder sb = new StringBuilder();
+            for (int x = 0; x < MapWidth; x++) Console.Write("@");
+            
+            Console.SetCursorPosition(0, MapHeight - 1);
+            for (int x = 0; x < MapWidth; x++) Console.Write("@");
+        }
+
+        private void Render()
+        {
+            
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
             for (int y = 0; y < MapHeight; y++)
             {
                 for (int x = 0; x < MapWidth; x++)
@@ -378,65 +412,56 @@ namespace GameProject.Core
                 }
                 sb.AppendLine();
             }
+
+            Console.SetCursorPosition(0, 0);
             Console.Write(sb.ToString());
-        }
 
-        private void Render()
-        {
-            DrawMap();
-
-            if (_portalX >= 0 && _portalX < MapWidth && _portalY >= 0 && _portalY < MapHeight)
+            DrawObject(_portalX, _portalY, "🖼");
+            if (_isPotionActive)
             {
-                Console.SetCursorPosition(_portalX, _portalY);
-                Console.Write("🖼");
+                DrawObject(_potionX, _potionY, "🧪");
             }
 
-            if (_isPotionActive && _potionX >= 0 && _potionX < MapWidth && _potionY >= 0 && _potionY < MapHeight)
+            if (_isAppleActive)
             {
-                Console.SetCursorPosition(_potionX, _potionY);
-                Console.Write("🧪");
-            }
-            
-            if (_isAppleActive && _appleX >= 0 && _appleX < MapWidth && _appleY >= 0 && _appleY < MapHeight)
-            {
-                Console.SetCursorPosition(_appleX, _appleY);
-                Console.Write("🍎");
+                DrawObject(_appleX, _appleY, "🍎");
             }
 
-            if (player != null && player.X >= 0 && player.X < MapWidth && player.Y >= 0 && player.Y < MapHeight)
+            if (player != null)
             {
-                Console.SetCursorPosition(player.X, player.Y);
-                Console.Write("🧝");
-            }
-
-            for (int i = 0; i < _enemies.Count; i++)
-            {
-                var e = _enemies[i];
-
-                if (e != null && e.X >= 0 && e.X < MapWidth && e.Y >= 0 && e.Y < MapHeight)
+                if (player.IsFireSwordActive)
                 {
-                    Console.SetCursorPosition(e.X, e.Y);
-                    Console.Write(e is DarkFairy ? "🧚" : "🐻");
-
-                    if (e.ActiveProjectile != null && 
-                        e.ActiveProjectile.X >= 0 && e.ActiveProjectile.X < MapWidth && 
-                        e.ActiveProjectile.Y >= 0 && e.ActiveProjectile.Y < MapHeight)
-                    {
-                        Console.SetCursorPosition(e.ActiveProjectile.X, e.ActiveProjectile.Y);
-                        Console.Write("✨");
-                    }
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    DrawObject(Math.Max(1, player.X - 1), player.Y, "🗡");
+                    Console.ResetColor();
                 }
+                Console.ForegroundColor = player.IsFireSwordActive ? ConsoleColor.Yellow : ConsoleColor.White;
+                DrawObject(player.X, player.Y, "🧝");
+                Console.ResetColor();
+            }
+
+            foreach (var e in _enemies)
+            {
+                DrawObject(e.X, e.Y, e is DarkFairy ? "🧚" : "🐻");
+                if (e.ActiveProjectile != null)
+                    DrawObject(e.ActiveProjectile.X, e.ActiveProjectile.Y, "✨");
             }
 
             Console.SetCursorPosition(0, MapHeight);
-            string playerName = player?.Name ?? "???";
-            int playerHp = player?.Health ?? 0;
-            
-            Console.Write(new string(' ', Console.WindowWidth));
-            Console.SetCursorPosition(0, MapHeight);
-            Console.WriteLine($"Игрок: {playerName} | HP: {playerHp,-5} | Врагов: {_enemies.Count}");
+            string buff = (player != null && player.IsFireSwordActive) ? " | 🗡 ОГОНЬ" : "";
+            string ui = $"Игрок: {player?.Name ?? "???"} | HP: {player?.Health ?? 0} | Врагов: {_enemies.Count}{buff}";
+            Console.Write(ui.PadRight(MapWidth));
         }
-                
+
+        private void DrawObject(int x, int y, string symbol)
+        {
+            if (x > 0 && x < MapWidth - 1 && y > 0 && y < MapHeight - 1)
+            {
+                Console.SetCursorPosition(x, y);
+                Console.Write(symbol);
+            }
+        }
+   
         private void LogMessage(string message)
         {
             Console.SetCursorPosition(0, LogMessageYPosition);

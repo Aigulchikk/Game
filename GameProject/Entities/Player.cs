@@ -51,6 +51,8 @@ namespace GameProject.Entities
 
         public int Level { get; set; } = 1;
         public int Score { get; set; } = 0;
+        
+        public bool IsFireSwordActive { get; set; } = false;
 
         public void Move(int dx, int dy) 
         { 
@@ -69,7 +71,8 @@ namespace GameProject.Entities
                 PlayerY = this.Y,
                 Health = this.Health,
                 Level = this.Level,
-                Score = this.Score
+                Score = this.Score,
+                IsFireSwordActive = this.IsFireSwordActive
             };
         }
 
@@ -80,6 +83,7 @@ namespace GameProject.Entities
             this.Health = data.Health;
             this.Level = data.Level;
             this.Score = data.Score;
+            this.IsFireSwordActive = data.IsFireSwordActive;
             
             OnHealthChanged?.Invoke(this.Health);
         }
